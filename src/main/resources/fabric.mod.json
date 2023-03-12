@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "modpackconfigupdater",
+  "version": "${version}",
+  "name": "Modpack Config Updater",
+  "description": "A way to update individuals configurations instead of complete configs file.",
+  "authors": [
+    "Raconteur"
+  ],
+  "contact": {
+    "repo": "https://github.com/paulb/Modpack-Config-Updater"
+  },
+  "license": "MIT",
+  "icon": "assets/modpackconfigupdater/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "fr.raconteur32.modpackconfigupdater.client.ModpackConfigUpdaterClient"
+    ],
+    "main": [
+      "fr.raconteur32.modpackconfigupdater.ModpackConfigUpdater"
+    ],
+    "preLaunch": [
+      "fr.raconteur32.modpackconfigupdater.prelaunch.ModpackConfigUpdaterPreLaunch"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.14.14",
+    "fabric": "*",
+    "minecraft": "1.19.2"
+  }
+}
