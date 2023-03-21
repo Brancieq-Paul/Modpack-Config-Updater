@@ -2,6 +2,10 @@ package fr.raconteur32.modpackconfigupdater.prelaunch;
 
 import com.google.gson.*;
 import fr.raconteur32.modpackconfigupdater.ModpackConfigUpdater;
+import fr.raconteur32.modpackconfigupdater.files.IFile;
+import fr.raconteur32.modpackconfigupdater.files.JsonFile;
+import fr.raconteur32.modpackconfigupdater.files.PropertiesFile;
+import fr.raconteur32.modpackconfigupdater.files.YAMLFile;
 import fr.raconteur32.modpackconfigupdater.files.filemergesystem.MergeableFileSystem;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
@@ -11,8 +15,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 public class ModpackConfigUpdaterPreLaunch implements PreLaunchEntrypoint {
+    // Paths
     public static final Path RUN_DIR = FabricLoader.getInstance().getGameDir();
     public static final Path CONFIG_DIR = FabricLoader.getInstance().getConfigDir();
     public static final Path MODPACK_CONFIG_UPDATER_DIR = Paths.get(CONFIG_DIR.toString(), "modpackconfigupdater");
@@ -20,9 +26,20 @@ public class ModpackConfigUpdaterPreLaunch implements PreLaunchEntrypoint {
     public static final Path OVERRIDES_DIR = Paths.get(MODPACK_CONFIG_UPDATER_DIR.toString(), "overrides");
     public static final String VERSION_FILE_NAME = "modpack_version.txt";
     public static final Path VERSION_FILE = Paths.get(VERSION_FILE_NAME);
+
+    // Priorities
+    public static final int UNIQUE_FORMAT_PRIORITY = 15;
+    public static final int PROPERTIES_FORMAT_PRIORITY = 10;
     @Override
     public void onPreLaunch() {
         ModpackConfigUpdater.LOGGER.info("Prelaunch verifications !");
+
+        // Register files types
+        IFile.register(UNIQUE_FORMAT_PRIORITY, JsonFile.class);
+        IFile.register(PROPERTIES_FORMAT_PRIORITY, PropertiesFile.class);
+        IFile.register(UNIQUE_FORMAT_PRIORITY, YAMLFile.class);
+
+        // Begin process
         handleDefaults();
         verifyVersions();
         applyChanges();
@@ -30,40 +47,17 @@ public class ModpackConfigUpdaterPreLaunch implements PreLaunchEntrypoint {
 
     private void verifyVersions() {
         try {
-            File version_file = VERSION_FILE.toFile();
-
             ModpackConfigUpdater.LOGGER.info("Verifying versions states...");
-            // Version file
-            if (!version_file.exists()) {
-                ModpackConfigUpdater.LOGGER.debug("Creating version file...");
-                if (!version_file.createNewFile()) {
-                    throw new IllegalStateException("Could not create file: " + version_file.getAbsolutePath());
-                }
-                FileWriter fw = new FileWriter(version_file);
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write("unknown");
-                bw.close();
-            }
             // Get list of versions
             String[] versions = getOverridesList();
             // Create override for each version
             for (String version : versions) {
-                version_file = Paths.get(OVERRIDES_DIR.toString(), version, VERSION_FILE_NAME).toFile();
-                if (!version_file.exists()) {
-                    File version_dir = Paths.get(OVERRIDES_DIR.toString(), version).toFile();
-                    ModpackConfigUpdater.LOGGER.debug("Creating override version file for '" + version + "'...");
-                    if (!version_dir.exists()) {
-                        if (!version_dir.mkdirs()) {
-                            throw new IllegalStateException("Could not create directory: " + version_dir.getAbsolutePath());
-                        }
+                File version_dir = Paths.get(OVERRIDES_DIR.toString(), version).toFile();
+                ModpackConfigUpdater.LOGGER.debug("Creating override version dir for '" + version + "'...");
+                if (!version_dir.exists()) {
+                    if (!version_dir.mkdirs()) {
+                        throw new IllegalStateException("Could not create directory: " + version_dir.getAbsolutePath());
                     }
-                    if (!version_file.createNewFile()) {
-                        throw new IllegalStateException("Could not create file: " + version_file.getAbsolutePath());
-                    }
-                    FileWriter fw = new FileWriter(version_file);
-                    BufferedWriter bw = new BufferedWriter(fw);
-                    bw.write(version);
-                    bw.close();
                 }
             }
         } catch (Exception e) {
@@ -72,9 +66,14 @@ public class ModpackConfigUpdaterPreLaunch implements PreLaunchEntrypoint {
     }
 
     private void applyChanges() {
-        try {
+        try {String actual_version;
             MergeableFileSystem origin = new MergeableFileSystem(RUN_DIR);
-            String actual_version = getActualVersion();
+            try {
+                actual_version = getActualVersion();
+            } catch (Exception e) {
+                actual_version = "unknown";
+                setActualVersion(actual_version);
+            }
             List<String> override_list = Arrays.asList(getOverridesList());
             boolean is_after_actual_version = !override_list.contains(actual_version);
 
@@ -82,6 +81,7 @@ public class ModpackConfigUpdaterPreLaunch implements PreLaunchEntrypoint {
                 if (is_after_actual_version) {
                     MergeableFileSystem override_fs = new MergeableFileSystem(Paths.get(OVERRIDES_DIR.toString(), override_str));
                     origin.merge(override_fs);
+                    setActualVersion(override_str);
                 } else if (actual_version.equals(override_str)) {
                     is_after_actual_version = true;
                 }
@@ -92,11 +92,35 @@ public class ModpackConfigUpdaterPreLaunch implements PreLaunchEntrypoint {
     }
 
     private String getActualVersion() throws IOException {
-        File version_file = VERSION_FILE.toFile();
-        FileReader fr = new FileReader(version_file);
-        BufferedReader br = new BufferedReader(fr);
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream(VERSION_FILE.toFile())) {
+            properties.load(fis);
+        }
+        return properties.getProperty("version");
+    }
 
-        return br.readLine();
+    private void setActualVersion(String newVersion) throws IOException {
+        Properties properties = new Properties();
+        File versionFile = VERSION_FILE.toFile();
+
+        if (!versionFile.exists()) {
+            if (!versionFile.createNewFile()) {
+                throw new IOException("Failed to create version file");
+            }
+        } else {
+            try (FileInputStream fis = new FileInputStream(versionFile)) {
+                properties.load(fis);
+            } catch (IOException e) {
+                // Fichier non valide, on le vide
+                properties.clear();
+            }
+        }
+
+        properties.setProperty("version", newVersion);
+
+        try (FileOutputStream fos = new FileOutputStream(versionFile)) {
+            properties.store(fos, "Updated version");
+        }
     }
 
     private String[] getOverridesList() throws IOException {

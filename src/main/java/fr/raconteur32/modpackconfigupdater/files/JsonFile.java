@@ -1,38 +1,38 @@
 package fr.raconteur32.modpackconfigupdater.files;
 
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import fr.raconteur32.modpackconfigupdater.ModpackConfigUpdater;
-import fr.raconteur32.modpackconfigupdater.utils.GsonTools;
-import fr.raconteur32.modpackconfigupdater.values.VJson;
+import fr.raconteur32.modpackconfigupdater.jsonAdapters.AbstractValueTypeAdapter;
+import fr.raconteur32.modpackconfigupdater.values.IMergeable;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import com.google.gson.Gson;
+import fr.raconteur32.modpackconfigupdater.values.VMap;
 
-public class JsonFile extends VJson implements IMergeableFile<JsonFile> {
+public class JsonFile implements IMergeableFile<JsonFile> {
 
     private Path FilePath;
+    protected VMap value;
 
-    public JsonFile() {
-        super();
+    protected JsonFile() {
     }
 
     public JsonFile(Path NewFilePath) {
-        super();
         this.init(NewFilePath);
     }
 
-
-    @Override
     public void init(Path FilePath) {
         setFilePath(FilePath);
-        this.set_raw_value(fileToJson());
+        value = Objects.requireNonNull(fileToJson());
     }
 
-    private JsonObject fileToJson() {
-        Gson gson = new Gson();
+    protected VMap fileToJson() {
+        Gson gson = new GsonBuilder().registerTypeAdapterFactory(new AbstractValueTypeAdapter.Factory())
+                .create();
         try (BufferedReader br = new BufferedReader(new FileReader(this.FilePath.toString()))) {
             // Read file contents into a StringBuilder
             StringBuilder sb = new StringBuilder();
@@ -43,11 +43,14 @@ public class JsonFile extends VJson implements IMergeableFile<JsonFile> {
             // Convert StringBuilder to String
             String fileContents = sb.toString();
             // Use Gson to convert String to JSON
-            return gson.fromJson(fileContents, JsonObject.class);
+            return gson.fromJson(fileContents, VMap.class);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new IllegalArgumentException("Can't load json data from file");
         }
-        return null;
+    }
+
+    public VMap getValue() {
+        return value;
     }
 
     public void setFilePath(Path filePath) {
@@ -62,8 +65,9 @@ public class JsonFile extends VJson implements IMergeableFile<JsonFile> {
     @Override
     public void write() {
         try {
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String toWrite = gson.toJson(this.get_raw_value());
+            Gson gson = new GsonBuilder().registerTypeAdapterFactory(new AbstractValueTypeAdapter.Factory())
+                    .setPrettyPrinting().create();
+            String toWrite = gson.toJson(value.get_raw_value());
             FileWriter fw = new FileWriter(this.FilePath.toFile());
             BufferedWriter bw = new BufferedWriter(fw);
             bw.write(toWrite);
@@ -74,16 +78,20 @@ public class JsonFile extends VJson implements IMergeableFile<JsonFile> {
     }
 
     @Override
-    public JsonFile merge(JsonFile other) {
-        try {
-            JsonFile merged = new JsonFile(getFilePath());
-
-            GsonTools.extendJsonObject(merged.get_raw_value(), other.get_raw_value(), GsonTools.ConflictStrategy.PREFER_SECOND_OBJ);
-            return merged;
-        } catch (GsonTools.JsonObjectExtensionConflictException e) {
-            e.printStackTrace();
-            ModpackConfigUpdater.LOGGER.error("Couldn't merge files");
+    public IMergeable<JsonFile> merge(IMergeable<JsonFile> other) {
+        if (!(other instanceof JsonFile otherJsonFile)) {
+            throw new IllegalArgumentException("Cannot merge with a non-JsonFile object");
         }
-        return null;
+        Class<? extends JsonFile> clazz = getClass();
+        JsonFile mergedFile = null;
+        try {
+            mergedFile = clazz.getConstructor(Path.class).newInstance(this.FilePath);
+        } catch (InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+
+        mergedFile.value = this.value.merge(otherJsonFile.getValue());
+
+        return mergedFile;
     }
 }

@@ -1,6 +1,7 @@
 package fr.raconteur32.modpackconfigupdater.files;
 
 import fr.raconteur32.modpackconfigupdater.ModpackConfigUpdater;
+import fr.raconteur32.modpackconfigupdater.values.IMergeable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -17,7 +18,7 @@ public class TxtFile implements IMergeableFile<TxtFile> {
         this.init(NewFilePath);
     }
 
-    @Override
+
     public void init(Path FilePath) {
         setFilePath(FilePath);
     }
@@ -36,9 +37,13 @@ public class TxtFile implements IMergeableFile<TxtFile> {
     }
 
     @Override
-    public TxtFile merge(@NotNull TxtFile other) {
+    public TxtFile merge(IMergeable<TxtFile> other) {
+        if (!(other instanceof TxtFile otherTxtFile)) {
+            throw new IllegalArgumentException("Cannot merge with a non-TxtFile object");
+        }
+
         try {
-            FileReader fr = new FileReader(other.getFilePath().toFile());
+            FileReader fr = new FileReader(otherTxtFile.getFilePath().toFile());
             BufferedReader br = new BufferedReader(fr);
             StringBuilder sb = new StringBuilder();
             String line;

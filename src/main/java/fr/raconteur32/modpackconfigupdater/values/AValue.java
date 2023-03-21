@@ -4,9 +4,6 @@ public abstract class AValue<T> {
     // Typed raw value
     private T _raw_value;
 
-    public AValue(){
-    }
-
     public AValue(T _raw_value) {
         this._raw_value = _raw_value;
     }
@@ -23,6 +20,4 @@ public abstract class AValue<T> {
     public String toString() {
         return _raw_value.toString();
     }
-
-    public abstract String formatted();
 }
