@@ -1,0 +1,39 @@
+name: Build and Publish Mod
+
+on: workflow_dispatch
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: forge-1.19
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+
+      - name: Set execute permissions on gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build shadowJar
+
+      - name: Publish Mod
+        uses: Kir-Antipov/mc-publish@v3.2
+        with:
+          modrinth-id: rmAl6EGF
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          curseforge-id: 836611
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+          version-type: alpha
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-prerelease: true
