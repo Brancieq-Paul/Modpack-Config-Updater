@@ -1,8 +1,6 @@
 name: Build and Publish Mod
 
-on:
-  workflow_dispatch:
-    push:
+on: workflow_dispatch
 
 jobs:
   build-and-publish:
