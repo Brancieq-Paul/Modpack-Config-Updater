@@ -1,8 +1,7 @@
 package fr.raconteur32.modpackconfigupdater.files;
 
-import fr.raconteur32.modpackconfigupdater.ModpackConfigUpdater;
+import fr.raconteur32.modpackconfigupdater.logs.Logs;
 import fr.raconteur32.modpackconfigupdater.values.IMergeable;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -56,7 +55,7 @@ public class TxtFile implements IMergeableFile<TxtFile> {
             bw.close();
             return this;
         } catch (IOException e) {
-            ModpackConfigUpdater.LOGGER.error("Can't merge .txt", e);
+            Logs.LOGGER.error("Can't merge .txt", e);
         }
         return this;
     }

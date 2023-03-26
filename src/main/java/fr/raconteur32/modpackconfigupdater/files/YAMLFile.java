@@ -11,7 +11,6 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +30,7 @@ public class YAMLFile extends JsonFile {
 
     @Override
     protected VMap fileToJson() {
-        Yaml yaml = new Yaml(new Constructor());
+        Yaml yaml = new Yaml();
         Map<String, Object> yamlData;
         try (InputStream inputStream = new FileInputStream(this.getFilePath().toString())) {
             yamlData = yaml.load(inputStream);
@@ -46,7 +45,7 @@ public class YAMLFile extends JsonFile {
 
     @Override
     public void write() {
-        Representer representer = new Representer();
+        Representer representer = new Representer(new DumperOptions());
         representer.getPropertyUtils().setSkipMissingProperties(true);
         DumperOptions options = new DumperOptions();
         options.setIndent(2);

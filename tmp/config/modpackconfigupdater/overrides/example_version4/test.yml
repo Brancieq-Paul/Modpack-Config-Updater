@@ -1,0 +1,6 @@
+---
+test-add-integer: 7
+test-list-numbers:
+  - 6
+  - 3.14
+  - testlist
