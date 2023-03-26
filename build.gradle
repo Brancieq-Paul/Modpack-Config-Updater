@@ -115,6 +115,7 @@ minecraft {
 }
 
 shadowJar {
+    archiveClassifier.set('') // enlève le "-all" du nom du fichier JAR
     configurations = [project.configurations.minecraftLibrary]
     mergeServiceFiles()
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
