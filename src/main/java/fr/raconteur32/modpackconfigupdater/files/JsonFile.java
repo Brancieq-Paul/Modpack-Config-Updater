@@ -1,8 +1,8 @@
 package fr.raconteur32.modpackconfigupdater.files;
 
 import com.google.gson.GsonBuilder;
-import fr.raconteur32.modpackconfigupdater.ModpackConfigUpdater;
 import fr.raconteur32.modpackconfigupdater.jsonAdapters.AbstractValueTypeAdapter;
+import fr.raconteur32.modpackconfigupdater.logs.Logs;
 import fr.raconteur32.modpackconfigupdater.values.IMergeable;
 
 import java.io.*;
@@ -73,7 +73,7 @@ public class JsonFile implements IMergeableFile<JsonFile> {
             bw.write(toWrite);
             bw.close();
         } catch (IOException e) {
-            ModpackConfigUpdater.LOGGER.error("Could not write File", e);
+            Logs.LOGGER.error("Could not write File", e);
         }
     }
 

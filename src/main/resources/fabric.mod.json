@@ -8,25 +8,21 @@
     "Raconteur"
   ],
   "contact": {
-    "repo": "https://github.com/paulb/Modpack-Config-Updater"
+    "sources": "https://github.com/paulb/Modpack-Config-Updater",
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/modpack-config-updater",
+    "issues": "https://github.com/Brancieq-Paul/Modpack-Config-Updater/issues"
   },
   "license": "MIT",
   "icon": "assets/modpackconfigupdater/icon.png",
   "environment": "client",
   "entrypoints": {
-    "client": [
-      "fr.raconteur32.modpackconfigupdater.client.ModpackConfigUpdaterClient"
-    ],
-    "main": [
-      "fr.raconteur32.modpackconfigupdater.ModpackConfigUpdater"
-    ],
     "preLaunch": [
       "fr.raconteur32.modpackconfigupdater.prelaunch.ModpackConfigUpdaterPreLaunch"
     ]
   },
   "depends": {
-    "fabricloader": ">=0.14.14",
+    "fabricloader": ">=0.14.17",
     "fabric": "*",
-    "minecraft": ""
+    "minecraft": ">=1.17.1"
   }
 }

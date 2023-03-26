@@ -1,8 +1,8 @@
 package fr.raconteur32.modpackconfigupdater.files.filemergesystem;
 
-import fr.raconteur32.modpackconfigupdater.ModpackConfigUpdater;
 import fr.raconteur32.modpackconfigupdater.exceptions.FileCreationException;
 import fr.raconteur32.modpackconfigupdater.files.*;
+import fr.raconteur32.modpackconfigupdater.logs.Logs;
 import fr.raconteur32.modpackconfigupdater.values.IMergeable;
 import org.apache.commons.compress.utils.FileNameUtils;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ public class MergeableFileSystem implements IMergeable<MergeableFileSystem> {
     protected Map<String, IMergeableFile<IMergeableFile<?>>> mergeable_files_list = new HashMap<>();
 
     public MergeableFileSystem(@NotNull Path file_system_base_path) {
-        ModpackConfigUpdater.LOGGER.debug("Initializing MergeableFileSystem from " + file_system_base_path);
+        Logs.LOGGER.debug("Initializing MergeableFileSystem from " + file_system_base_path);
         setFileSystemBase(file_system_base_path);
         regenerateFileList();
     }
@@ -40,11 +40,11 @@ public class MergeableFileSystem implements IMergeable<MergeableFileSystem> {
             if (!ANALYZED_FILE_EXTENSIONS.contains(FileNameUtils.getExtension(path.getFileName().toString()))) {
                 return;
             }
-            ModpackConfigUpdater.LOGGER.debug(path + " extension detected as mergeable.");
+            Logs.LOGGER.debug(path + " extension detected as mergeable.");
             addMergeable(path);
         } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException |
                  FileCreationException e) {
-            ModpackConfigUpdater.LOGGER.error("Error while building the MergeableFile", e);
+            Logs.LOGGER.error("Error while building the MergeableFile", e);
         }
     }
 
@@ -96,7 +96,7 @@ public class MergeableFileSystem implements IMergeable<MergeableFileSystem> {
             }
             return base_merge;
         } catch (IOException e) {
-            ModpackConfigUpdater.LOGGER.error("Could not merge MergeableFileSystem properly", e);
+            Logs.LOGGER.error("Could not merge MergeableFileSystem properly", e);
             return null;
         }
     }

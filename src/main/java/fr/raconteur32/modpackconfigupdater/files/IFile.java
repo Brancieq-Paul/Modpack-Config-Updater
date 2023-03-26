@@ -1,7 +1,7 @@
 package fr.raconteur32.modpackconfigupdater.files;
 
-import fr.raconteur32.modpackconfigupdater.ModpackConfigUpdater;
 import fr.raconteur32.modpackconfigupdater.exceptions.FileCreationException;
+import fr.raconteur32.modpackconfigupdater.logs.Logs;
 
 import java.lang.reflect.Constructor;
 import java.nio.file.Path;
@@ -18,6 +18,7 @@ public interface IFile {
     public static IFile create(Path filePath) throws FileCreationException {
         IFile result = null;
         int maxPriority = -1;
+        Class<? extends IFile> usedType = null;
         for (Map.Entry<Class<? extends IFile>, Integer> entry : fileTypes.entrySet()) {
             int priority = entry.getValue();
             Class<? extends IFile> fileType = entry.getKey();
@@ -28,13 +29,15 @@ public interface IFile {
                     result = file;
                     maxPriority = priority;
                 }
+                usedType = fileType;
             } catch (Exception e) {
-                // Log error and try the next file type
-                ModpackConfigUpdater.LOGGER.debug("Can't create file with " + fileType.getName(), e);
+                // Exeption handling later
             }
         }
         if (result == null) {
             throw new FileCreationException("Unable to create file from path: " + filePath);
+        } else {
+            Logs.LOGGER.info("File '" + filePath.toString() + "' interpreted as " + usedType.getName());
         }
         return result;
     }
